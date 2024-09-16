@@ -1,0 +1,47 @@
+.App {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  text-align: center;
+}
+
+ul {
+  text-align: left;
+  padding: 0;
+  list-style: none;
+}
+
+h3 {
+  text-align: center;
+}
+
+input {
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.error {
+  border: 2px solid red;
+}
+
+.errorMessage {
+  font-weight: bold;
+  text-align: left;
+  color: red;
+}
+
+.active-filter {
+  background-color: lightgreen;
+}
+
+.is-done {
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.task-title {
+  display: flex;
+  align-items: center;
+}
