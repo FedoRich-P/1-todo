@@ -1,15 +1,15 @@
-import React, {useState} from 'react';
+import React, {ChangeEvent, useState} from 'react';
 import './App.css';
 import {v1} from "uuid";
 import {TodoList} from "./components/TodoList";
 import {log} from "node:util";
+import {AddItemForm} from "./components/AddItemFormPropsType";
 
 export type FilterType = 'all' | 'active' | 'completed';
 
 type TodolistType = {
     id: string
     title: string
-    filter: FilterType
 }
 
 export type TaskType = {
@@ -18,58 +18,84 @@ export type TaskType = {
     isDone: boolean;
 }
 
+
+type TasksKeyType = {
+    data: TaskType[];
+    filter: FilterType;
+}
+
 export type TasksStateType = {
-    [key: string]: TaskType[]
+    [key: string]: TasksKeyType
 }
 
 function App() {
     let todolistID1 = v1()
     let todolistID2 = v1()
+    let todolistID3 = v1()
 
     let [todoLists, setTodoLists] = useState<TodolistType[]>([
-        {id: todolistID1, title: 'What to learn', filter: 'all'},
-        {id: todolistID2, title: 'What to know', filter: 'all'},
+        {id: todolistID1, title: 'What to learn'},
+        {id: todolistID2, title: 'What to know'},
     ])
 
     let [tasks, setTasks] = useState<TasksStateType>({
-        [todolistID1]: [
-            {id: v1(), title: 'HTML', isDone: true},
-            {id: v1(), title: 'CSS', isDone: true},
-            {id: v1(), title: 'JS', isDone: true},
-            {id: v1(), title: 'React', isDone: true},
-            {id: v1(), title: 'Redux', isDone: false},
-        ],
-        [todolistID2]: [
-            {id: v1(), title: 'Rest API', isDone: false},
-            {id: v1(), title: 'GraphQL', isDone: false},
-            {id: v1(), title: 'SQL', isDone: false},
-        ],
+        [todolistID1]: {
+            data: [
+                {id: v1(), title: 'HTML', isDone: true},
+                {id: v1(), title: 'CSS', isDone: true},
+                {id: v1(), title: 'JS', isDone: true},
+                {id: v1(), title: 'React', isDone: true},
+                {id: v1(), title: 'Redux', isDone: false},
+            ],
+            filter: 'all'
+        },
+        [todolistID2]: {
+            data: [
+                {id: v1(), title: 'Rest API', isDone: false},
+                {id: v1(), title: 'GraphQL', isDone: false},
+                {id: v1(), title: 'SQL', isDone: false},
+            ],
+            filter: 'all'
+        },
     })
-
-
     const addTask = (todoId: string, title: string) => {
         setTasks({
             ...tasks,
-            [todoId]: [{id: v1(), title, isDone: false}, ...tasks[todoId]]
+            [todoId]: {
+                ...tasks[todoId],
+                data: [{id: v1(), title, isDone: false}, ...tasks[todoId].data]
+            }
         })
     }
 
     const removeTask = (todoId: string, id: string) => {
         setTasks({
             ...tasks,
-            [todoId]: tasks[todoId].filter(task => task.id !== id)
+            [todoId]: {
+                ...tasks[todoId],
+                data: tasks[todoId].data.filter(todo => todo.id !== id)
+            }
         })
     }
 
     const changeTaskStatus = (todoId: string, taskId: string, isDone: boolean) => {
         setTasks({
             ...tasks,
-            [todoId]: tasks[todoId].map(task => task.id === taskId ? {...task, isDone} : task)
+            [todoId]: {
+                ...tasks[todoId],
+                data: tasks[todoId].data.map(todo => todo.id === taskId ? {...todo, isDone} : todo)
+            }
         })
     }
 
     const changeTodoListsFilter = (todoId: string, filter: FilterType) => {
-        setTodoLists(todoLists.map(todo => todo.id === todoId ? {...todo, filter} : todo))
+        setTasks({
+            ...tasks,
+            [todoId]: {
+                ...tasks[todoId],
+                filter
+            }
+        })
     }
 
     const removeTodoList = (todoId: string) => {
@@ -77,12 +103,34 @@ function App() {
         delete tasks[todoId]
     }
 
+    const addTodoList = (title: string) => {
+        setTodoLists([
+            {id: todolistID3, title},
+            ...todoLists
+        ])
 
-    const createTodoList = todoLists.map(({filter, id, title}) => {
+        setTasks({[todolistID3]: {data: [], filter: 'all'}, ...tasks})
+    }
 
-        let filteredTasks = tasks[id]
+    const changeTaskTitle = (todoId: string, taskId: string, title: string) => {
+        setTasks({
+            ...tasks,
+            [todoId]: {
+                ...tasks[todoId],
+                data: tasks[todoId].data.map(todo => todo.id === taskId ? {...todo, title} : todo)
+            }
+        })
+    }
 
-        switch (filter) {
+    const changeTodoTitle = (todoId: string, title: string) => {
+        setTodoLists(todoLists.map(tl => tl.id === todoId ? {...tl, title} : tl))
+    }
+
+    const createTodoList = todoLists.map(todo => {
+
+        let filteredTasks = tasks[todo.id]?.data
+
+        switch (tasks[todo.id].filter) {
             case 'active':
                 filteredTasks = filteredTasks.filter(task => task.isDone)
                 break
@@ -93,16 +141,18 @@ function App() {
 
         return (
             <TodoList
-                key={id}
-                todoId={id}
-                title={title}
+                key={todo.id}
+                todoId={todo.id}
+                title={todo.title}
                 tasks={filteredTasks}
                 addTask={addTask}
                 removeTask={removeTask}
                 changeTodoListsFilter={changeTodoListsFilter}
                 changeTaskStatus={changeTaskStatus}
-                filter={filter}
+                filter={tasks[todo.id].filter}
                 removeTodoList={removeTodoList}
+                changeTaskTitle={changeTaskTitle}
+                changeTodoTitle={changeTodoTitle}
             />
         )
     })
@@ -110,6 +160,7 @@ function App() {
 
     return (
         <div className="App">
+            <AddItemForm addItem={addTodoList}/>
             {createTodoList}
         </div>
     );
